@@ -84,7 +84,7 @@ body {
 
 /* CHOICE BUTTONS */
 .choice-btn {
-    background-image: url("images/ui/button.png");
+    background-image: url("images/ui/stone_large.png");
     background-size: 100% 100%;
     border: none;
     padding: 14px 25px;
