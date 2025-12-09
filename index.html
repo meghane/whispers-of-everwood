@@ -2,78 +2,43 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Choose Your Own Adventure</title>
+    <title>UI Test</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <div id="game-container">
+    <!-- Background -->
+    <div class="background"></div>
 
-        <!-- ===================== -->
-        <!-- CHARACTER NAME SCREEN -->
-        <!-- ===================== -->
-        <div id="name-section">
-            <h1>Character Creation</h1>
-            <p>Enter your character's name:</p>
-            <input type="text" id="playerName" placeholder="Your name...">
-            <button id="saveNameBtn">Save Name</button>
-        </div>
+    <!-- UI Box Container -->
+    <div class="ui-container">
 
-        <!-- ===================== -->
-        <!-- TRAITS SCREEN -->
-        <!-- ===================== -->
-        <div id="traits-section" style="display:none;">
-            <h2 id="greeting"></h2>
-            <p>Distribute your <strong>10 trait points</strong>:</p>
+        <!-- Stone frame (outer shell) -->
+        <img src="images/ui/stone_large.png" class="stone-frame">
 
-            <p>Points remaining: <span id="pointsLeft">10</span></p>
+        <!-- Parchment layered on top -->
+        <div class="parchment-wrapper">
+            <img src="images/ui/parchment_large.png" class="parchment">
 
-            <div class="trait">
-                Strength
-                <input type="range" min="0" max="10" value="0" class="traitSlider" data-trait="strength">
-                <span class="traitValue">0</span>
+            <div class="content">
+
+                <div class="text">
+                    The wind whispers through the Everwood.<br>
+                    Shadows stretch across the moss-covered path…
+                </div>
+
+                <img src="images/ui/divider.png" class="divider">
+
+                <div class="choices">
+                    <button class="choice-btn">Follow the path</button>
+                    <button class="choice-btn">Hide behind a tree</button>
+                    <button class="choice-btn">Call out into the woods</button>
+                </div>
+
             </div>
-
-            <div class="trait">
-                Charisma
-                <input type="range" min="0" max="10" value="0" class="traitSlider" data-trait="charisma">
-                <span class="traitValue">0</span>
-            </div>
-
-            <div class="trait">
-                Speed
-                <input type="range" min="0" max="10" value="0" class="traitSlider" data-trait="speed">
-                <span class="traitValue">0</span>
-            </div>
-
-            <div class="trait">
-                Intelligence
-                <input type="range" min="0" max="10" value="0" class="traitSlider" data-trait="intelligence">
-                <span class="traitValue">0</span>
-            </div>
-
-            <div class="trait">
-                Endurance
-                <input type="range" min="0" max="10" value="0" class="traitSlider" data-trait="endurance">
-                <span class="traitValue">0</span>
-            </div>
-
-            <button id="startBtn" disabled>Start Adventure</button>
-        </div>
-
-        <!-- ===================== -->
-        <!-- STORY SCREEN -->
-        <!-- ===================== -->
-        <div id="story-section" style="display:none;">
-            <h1 id="headerStats"></h1>
-            <div id="story"></div>
-            <div id="choices"></div>
         </div>
 
     </div>
-
-    <script src="script.js"></script>
 
 </body>
 </html>
