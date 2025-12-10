@@ -1,4 +1,15 @@
-/* RESET */
+/* LOCKED CSS */
+/* BACKGROUND */
+.background {
+    position: fixed;
+    inset: 0;
+    background-image: url("images/backgrounds/test_bg.png");
+    background-size: cover;
+    background-position: center;
+    filter: brightness(0.45);
+    z-index: -10;
+}
+
 body {
     margin: 0;
     padding: 0;
@@ -7,43 +18,67 @@ body {
     overflow: hidden;
 }
 
-/* BACKGROUND IMAGE */
-.background {
+/* HUD */
+.hud-bar {
     position: fixed;
-    top: 0; 
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-image: url("images/backgrounds/test_bg.png"); /* your image goes here */
-    background-size: cover;
-    background-position: center;
-    filter: brightness(0.45);
-    z-index: -10;
-}
-
-/* UI POSITIONING */
-.ui-container {
-    position: absolute;
-    bottom: 40px;
+    top: 8px;
     width: 100%;
     display: flex;
+    justify-content: center;
+    z-index: 10;
+}
+
+.hud-inner {
+    position: relative;
+    width: 70%;
+    max-width: 820px;
+    height: 56px;
+}
+
+.hud-bg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: fill;
+    pointer-events: none;
+}
+
+.hud-content {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 26px;
+    color: #f5f1e8;
+    text-shadow: 0 2px 3px #000;
+    font-size: 18px;
+    font-weight: 700;
+}
+
+/* UI */
+.ui-center {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
     justify-content: center;
 }
 
 /* STONE FRAME */
 .stone-frame {
     position: absolute;
-    width: 80%;
-    max-width: 900px;
+    width: 68%;
+    max-width: 820px;
     pointer-events: none;
-    z-index: -1;
 }
 
-/* PARCHMENT POSITIONING */
+/* PARCHMENT */
 .parchment-wrapper {
     position: relative;
-    width: 78%;
-    max-width: 880px;
+    width: 64%;
+    max-width: 780px;
 }
 
 .parchment {
@@ -51,48 +86,110 @@ body {
     pointer-events: none;
 }
 
-/* CONTENT PLACEMENT */
+/* CONTENT */
 .content {
     position: absolute;
-    top: 12%;
+    top: 10%;
     left: 50%;
     transform: translateX(-50%);
-    width: 85%;
+    width: 92%;
     text-align: center;
+    
 }
 
-/* TEXT */
+/* STORY TEXT */
 .text {
-    font-size: 20px;
-    line-height: 1.4;
-    margin-bottom: 10px;
+    font-size: 19px;
+    line-height: 1.45;
+    margin-bottom: 14px;
 }
 
-/* DIVIDER LINE */
+/* DIVIDER */
 .divider {
-    width: 80%;
+    width: 78%;
+    margin: 12px auto 18px;
     display: block;
-    margin: 12px auto;
 }
 
 /* CHOICES */
 .choices {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 18px;
+    align-items: center;
 }
 
-/* CHOICE BUTTONS */
+/* CHOICE BUTTON */
 .choice-btn {
-    background-image: url("images/ui/choice_bg.png");
-    background-size: 100% 100%;
+    position: relative;
+    width: 90%;
+    max-width: 620px;
+    height: 72px;
     border: none;
-    padding: 14px 25px;
-    font-size: 18px;
-    color: #2c1a08;
+    background: none;
     cursor: pointer;
+    overflow: hidden;
+    
 }
 
-.choice-btn:hover {
-    filter: brightness(1.1);
+.choice-img {
+    width: 100%;
+    height: 100%;
+    object-fit: stretch;
+    pointer-events: none;
+}
+
+.choice-text {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: Georgia, serif;
+    font-size: 18px;
+    font-weight: 500;
+    color: #2c1a08;
+    pointer-events: none;
+}
+
+/* DISABLED CHOICE BUTTON */
+.choice-btn.disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.choice-requirement {
+    margin-top: 2px;
+    margin-bottom: 4px;
+    font-size: 12px;
+    color: #4e3020;
+}
+
+.choice-wrapper {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+
+.choice-btn::before {
+    content: "";
+    position: absolute;
+    inset: 8px;
+    background: rgba(240, 225, 200, 0.18);
+    border-radius: 6px;
+    pointer-events: none;
+}
+
+.choice-btn:not(.disabled)::before {
+    background: rgba(240, 225, 200, 0.22);
+}
+
+.choice-btn.disabled::before {
+    background: rgba(0, 0, 0, 0.18);
+}
+
+.choice-btn:not(.disabled):hover::before {
+    background: rgba(255, 245, 225, 0.3);
 }

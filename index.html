@@ -2,43 +2,51 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>UI Test</title>
+    <title>Whispers of Everwood</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <!-- Background -->
-    <div class="background"></div>
+<!-- BACKGROUND -->
+<div class="background" id="background"></div>
 
-    <!-- UI Box Container -->
-    <div class="ui-container">
-
-        <!-- Stone frame (outer shell) -->
-        <img src="images/ui/stone_large.png" class="stone-frame">
-
-        <!-- Parchment layered on top -->
-        <div class="parchment-wrapper">
-            <img src="images/ui/parchment_large.png" class="parchment">
-
-            <div class="content">
-
-                <div class="text">
-                    The wind whispers through the Everwood.<br>
-                    Shadows stretch across the moss-covered path…
-                </div>
-
-                <img src="images/ui/divider.png" class="divider">
-
-                <div class="choices">
-                    <button class="choice-btn">Follow the path</button>
-                    <button class="choice-btn">Hide behind a tree</button>
-                    <button class="choice-btn">Call out into the woods</button>
-                </div>
-
-            </div>
+<!-- HUD -->
+<div class="hud-bar">
+    <div class="hud-inner">
+        <img src="images/ui/stone_small.png" class="hud-bg">
+        <div class="hud-content">
+            <span class="hud-name" id="hud-name"></span>
+            <span id="hud-hp"></span>
+            <span id="hud-strength"></span>
+            <span id="hud-charisma"></span>
+            <span id="hud-speed"></span>
+            <span id="hud-intelligence"></span>
+            <span id="hud-endurance"></span>
         </div>
-
     </div>
+</div>
+
+<!-- CENTERED UI -->
+<div class="ui-center">
+    <img src="images/ui/stone_large.png" class="stone-frame">
+    <div class="parchment-wrapper">
+        <img src="images/ui/parchment_large.png" class="parchment">
+
+        <div class="content">
+            <!-- STORY TEXT -->
+            <div class="text" id="story-text"></div>
+
+            <!-- DIVIDER -->
+            <img src="images/ui/divider.png" class="divider" id="divider">
+
+            <!-- CHOICES -->
+            <div class="choices" id="choices-container"></div>
+        </div>
+    </div>
+</div>
+
+<!-- GAME ENGINE -->
+<script src="script.js"></script>
 
 </body>
 </html>
