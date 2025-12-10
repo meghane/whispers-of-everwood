@@ -1,180 +1,309 @@
-// Basic player stats
-const player = {
+// script.js
+
+import { Chapter1CastleScenes } from "./scenes/chapter1_castle.js";
+import { CharacterCreationScenes } from "./scenes/character_creation.js";
+
+
+/* =====================
+   GAME STATE
+===================== */
+
+const state = {
+  player: {
     name: "Everwood Heir",
     hp: 60,
     strength: 3,
     charisma: 1,
-    speed: 2,
+    speed: 3,
     intelligence: 4,
-    endurance: 0,
+    endurance: 0
+  },
+  currentScene: null
 };
 
-// One test scene with requirements
+/* =====================
+   SCENE REGISTRY
+===================== */
+
 const scenes = {
-    forest_clearing: {
-        text: "The wind whispers through the Everwood. Shadows stretch across the moss-covered path...",
-        choices: [
-            {
-                text: "Follow the path",
-                next: "follow_path",
-                requires: null, // always available
-            },
-            {
-                text: "Hide behind a tree",
-                next: "hide_tree",
-                requires: { speed: 3 }, // needs speed >= 3
-            },
-            {
-                text: "Call out into the woods",
-                next: "call_woods",
-                requires: { charisma: 2 }, // needs charisma >= 2
-            },
-        ],
-    },
-
-    follow_path: {
-        text: "You follow the winding path deeper into the Everwood...",
-        choices: [
-            { text: "Back", next: "forest_clearing", requires: null },
-        ],
-    },
-
-    hide_tree: {
-        text: "You try to slip behind a tree, but your steps rustle the leaves a bit too loudly.",
-        choices: [
-            { text: "Back", next: "forest_clearing", requires: null },
-        ],
-    },
-
-    call_woods: {
-        text: "Your voice echoes through the trees. Something stirs in the distance...",
-        choices: [
-            { text: "Back", next: "forest_clearing", requires: null },
-        ],
-    },
+...CharacterCreationScenes,
+  ...Chapter1CastleScenes
 };
 
-let currentSceneId = "forest_clearing";
+/* =====================
+   DOM REFERENCES
+===================== */
 
-// --- HUD UPDATE ---
+const bgEl = document.getElementById("background");
+const textEl = document.getElementById("story-text");
+const choicesEl = document.getElementById("choices-container");
+const dividerEl = document.getElementById("divider");
+
+const hud = {
+  name: document.getElementById("hud-name"),
+  hp: document.getElementById("hud-hp"),
+  strength: document.getElementById("hud-strength"),
+  charisma: document.getElementById("hud-charisma"),
+  speed: document.getElementById("hud-speed"),
+  intelligence: document.getElementById("hud-intelligence"),
+  endurance: document.getElementById("hud-endurance")
+};
+
+/* =====================
+   HUD UPDATE
+===================== */
+
 function updateHUD() {
-    document.getElementById("hud-name").textContent = player.name;
-    document.getElementById("hud-hp").textContent = player.hp;
-    document.getElementById("hud-str").textContent = player.strength;
-    document.getElementById("hud-cha").textContent = player.charisma;
-    document.getElementById("hud-spd").textContent = player.speed;
-    document.getElementById("hud-int").textContent = player.intelligence;
-    document.getElementById("hud-end").textContent = player.endurance;
+  hud.name.textContent = state.player.name;
+  hud.hp.textContent = `❤️ ${state.player.hp}`;
+  hud.strength.textContent = `⚔️ ${state.player.strength}`;
+  hud.charisma.textContent = `💬 ${state.player.charisma}`;
+  hud.speed.textContent = `⚡ ${state.player.speed}`;
+  hud.intelligence.textContent = `🧠 ${state.player.intelligence}`;
+  hud.endurance.textContent = `🛡 ${state.player.endurance}`;
 }
 
-// Check if player meets requirements
-function meetsRequirements(req) {
-    if (!req) return true;
-    let ok = true;
+/* =====================
+   REQUIREMENT CHECK
+===================== */
 
-    if (req.strength !== undefined) {
-        ok = ok && player.strength >= req.strength;
-    }
-    if (req.charisma !== undefined) {
-        ok = ok && player.charisma >= req.charisma;
-    }
-    if (req.speed !== undefined) {
-        ok = ok && player.speed >= req.speed;
-    }
-    if (req.intelligence !== undefined) {
-        ok = ok && player.intelligence >= req.intelligence;
-    }
-    if (req.endurance !== undefined) {
-        ok = ok && player.endurance >= req.endurance;
-    }
-
-    return ok;
+function meetsRequirements(requirements = {}) {
+  return Object.entries(requirements).every(
+    ([stat, value]) => state.player[stat] >= value
+  );
 }
 
-// Turn a requirement object into human text
-function formatRequirement(req) {
-    if (!req) return "";
+/* =====================
+   RENDER SCENE
+===================== */
 
-    const parts = [];
-    if (req.strength !== undefined) {
-        parts.push(`Strength ≥ ${req.strength}`);
-    }
-    if (req.charisma !== undefined) {
-        parts.push(`Charisma ≥ ${req.charisma}`);
-    }
-    if (req.speed !== undefined) {
-        parts.push(`Speed ≥ ${req.speed}`);
-    }
-    if (req.intelligence !== undefined) {
-        parts.push(`Intelligence ≥ ${req.intelligence}`);
-    }
-    if (req.endurance !== undefined) {
-        parts.push(`Endurance ≥ ${req.endurance}`);
+function renderScene(sceneId) {
+  const scene = scenes[sceneId];
+  if (!scene) {
+    console.error("Scene not found:", sceneId);
+    return;
+  }
+
+  state.currentScene = sceneId;
+
+  /* Background */
+  bgEl.style.backgroundImage = `url("${scene.background}")`;
+
+  /* Text */
+  textEl.innerHTML =
+    typeof scene.text === "function"
+      ? scene.text(state).replace(/\n/g, "<br>")
+      : scene.text.replace(/\n/g, "<br>");
+
+  /* Clear choices */
+  choicesEl.innerHTML = "";
+
+  /* Divider visibility */
+  dividerEl.style.display = scene.choices.length ? "block" : "none";
+
+  /* SPECIAL CASES: name input & stat selection */
+    if (scene.choices.length === 1 && scene.choices[0].type === "name-input") {
+    renderNameInput();
+    updateHUD();
+    return;
     }
 
-    return "Requires " + parts.join(" and ");
+    if (scene.choices.length === 1 && scene.choices[0].type === "stat-allocation") {
+    renderStatAllocation();
+    updateHUD();
+    return;
+    }
+
+  /* Build choices */
+  scene.choices.forEach((choice) => {
+    const wrapper = document.createElement("div");
+    wrapper.className = "choice-wrapper";
+
+    const btn = document.createElement("button");
+    btn.className = "choice-btn";
+
+    const img = document.createElement("img");
+    img.src = "images/ui/stone_small.png";
+    img.className = "choice-img";
+
+    const span = document.createElement("span");
+    span.className = "choice-text";
+    span.textContent = choice.text;
+
+    btn.appendChild(img);
+    btn.appendChild(span);
+
+    const allowed = meetsRequirements(choice.requires);
+
+    if (!allowed) {
+      btn.classList.add("disabled");
+
+      const req = document.createElement("div");
+      req.className = "choice-requirement";
+
+      req.textContent =
+        "Requires " +
+        Object.entries(choice.requires)
+          .map(([k, v]) => `${capitalize(k)} ≥ ${v}`)
+          .join(", ");
+
+      wrapper.appendChild(btn);
+      wrapper.appendChild(req);
+    } else {
+      btn.addEventListener("click", () => {
+        renderScene(choice.next);
+      });
+      wrapper.appendChild(btn);
+    }
+
+    choicesEl.appendChild(wrapper);
+  });
+
+  updateHUD();
+}
+function renderNameInput() {
+  choicesEl.innerHTML = "";
+
+  const wrapper = document.createElement("div");
+  wrapper.className = "choice-wrapper";
+
+  const input = document.createElement("input");
+  input.type = "text";
+  input.placeholder = "Enter your name";
+  input.className = "name-input";
+
+  const btn = document.createElement("button");
+  btn.className = "choice-btn";
+  
+  const img = document.createElement("img");
+  img.src = "images/ui/stone_small.png";
+  img.className = "choice-img";
+
+  const span = document.createElement("span");
+  span.className = "choice-text";
+  span.textContent = "Continue";
+
+  btn.appendChild(img);
+  btn.appendChild(span);
+
+  btn.addEventListener("click", () => {
+    const name = input.value.trim();
+    if (name.length >= 2) {
+      state.player.name = name;
+      renderScene("stat_select");
+    }
+  });
+
+  wrapper.appendChild(input);
+  wrapper.appendChild(btn);
+  choicesEl.appendChild(wrapper);
 }
 
-// Render the current scene text + choices
-function renderScene() {
-    const scene = scenes[currentSceneId];
+function renderStatAllocation() {
+  choicesEl.innerHTML = "";
+  
+  const stats = ["strength", "charisma", "speed", "intelligence", "endurance"];
 
-    const textEl = document.getElementById("scene-text");
-    const choicesContainer = document.getElementById("choices");
+  const totalPoints = 10;
+  let spent = 0;
 
-    textEl.textContent = scene.text;
-    choicesContainer.innerHTML = "";
+  // Reset stats for creation
+  stats.forEach((s) => (state.player[s] = 0));
 
-    scene.choices.forEach((choice) => {
-        // button wrapper
-        const wrapper = document.createElement("div");
-        wrapper.style.width = "100%";
-        wrapper.style.display = "flex";
-        wrapper.style.flexDirection = "column";
-        wrapper.style.alignItems = "center";
+  const updatePoints = () => {
+    pointsDisplay.textContent = `Points Remaining: ${totalPoints - spent}`;
+    updateHUD();
+    continueBtn.disabled = spent !== totalPoints;
+  };
 
-        // actual button
-        const btn = document.createElement("button");
-        btn.className = "choice-btn";
+  const wrapper = document.createElement("div");
+  wrapper.className = "choice-wrapper";
 
-        // image + text inside the button
-        const img = document.createElement("img");
-        img.src = "images/ui/choice.png";
-        img.className = "choice-img";
+  // Points Remaining display
+  const pointsDisplay = document.createElement("div");
+  pointsDisplay.className = "points-display";
+  wrapper.appendChild(pointsDisplay);
 
-        const span = document.createElement("span");
-        span.className = "choice-text";
-        span.textContent = choice.text;
+  // Create each stat row
+  stats.forEach((stat) => {
+    const row = document.createElement("div");
+    row.className = "stat-row";
 
-        btn.appendChild(img);
-        btn.appendChild(span);
+    const label = document.createElement("span");
+    label.textContent = stat.charAt(0).toUpperCase() + stat.slice(1);
 
-        const allowed = meetsRequirements(choice.requires);
+    const minus = document.createElement("button");
+    minus.textContent = "-";
 
-        if (!allowed) {
-            btn.classList.add("disabled");
-            btn.disabled = true;
+    const val = document.createElement("span");
+    val.textContent = "0";
 
-            const reqText = document.createElement("div");
-            reqText.className = "choice-requirement";
-            reqText.textContent = formatRequirement(choice.requires);
-            wrapper.appendChild(btn);
-            wrapper.appendChild(reqText);
-        } else {
-            btn.addEventListener("click", () => {
-                currentSceneId = choice.next;
-                renderScene();
-            });
-            wrapper.appendChild(btn);
-        }
+    const plus = document.createElement("button");
+    plus.textContent = "+";
 
-        choicesContainer.appendChild(wrapper);
+    minus.addEventListener("click", () => {
+      if (state.player[stat] > 0) {
+        state.player[stat]--;
+        spent--;
+        val.textContent = state.player[stat];
+        updatePoints();
+      }
     });
 
-    updateHUD();
+    plus.addEventListener("click", () => {
+      if (spent < totalPoints) {
+        state.player[stat]++;
+        spent++;
+        val.textContent = state.player[stat];
+        updatePoints();
+      }
+    });
+
+    row.appendChild(label);
+    row.appendChild(minus);
+    row.appendChild(val);
+    row.appendChild(plus);
+    wrapper.appendChild(row);
+  });
+
+  // Continue button
+  const continueBtn = document.createElement("button");
+  continueBtn.className = "choice-btn";
+  continueBtn.disabled = true;
+
+  const img = document.createElement("img");
+  img.src = "images/ui/stone_small.png";
+  img.className = "choice-img";
+
+  const span = document.createElement("span");
+  span.className = "choice-text";
+  span.textContent = "Begin Your Journey";
+
+  continueBtn.appendChild(img);
+  continueBtn.appendChild(span);
+
+  continueBtn.addEventListener("click", () => {
+    renderScene("intro"); // jumps into story
+  });
+
+  wrapper.appendChild(continueBtn);
+  choicesEl.appendChild(wrapper);
+
+  updatePoints();
 }
 
-// Kick everything off
-document.addEventListener("DOMContentLoaded", () => {
-    renderScene();
-});
+/* =====================
+   UTIL
+===================== */
+
+function capitalize(str) {
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+/* =====================
+   START GAME
+===================== */
+
+updateHUD();
+renderScene("name_select");
+
