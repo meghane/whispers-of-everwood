@@ -4,6 +4,7 @@ export const Chapter1CastleScenes = {
   intro: {
     id: "intro",
     background: "images/backgrounds/test_bg.png",
+    transition: "full",
     text: (state) =>
       `The wind whispers through the Everwood.\n\nYou feel the weight of destiny, ${state.player.name}.`,
 

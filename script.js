@@ -1,8 +1,6 @@
 // script.js
-
 import { Chapter1CastleScenes } from "./scenes/chapter1_castle.js";
 import { CharacterCreationScenes } from "./scenes/character_creation.js";
-
 
 /* =====================
    GAME STATE
@@ -12,10 +10,10 @@ const state = {
   player: {
     name: "Everwood Heir",
     hp: 60,
-    strength: 3,
-    charisma: 1,
-    speed: 3,
-    intelligence: 4,
+    strength: 0,
+    charisma: 0,
+    speed: 0,
+    intelligence: 0,
     endurance: 0
   },
   currentScene: null
@@ -26,7 +24,7 @@ const state = {
 ===================== */
 
 const scenes = {
-...CharacterCreationScenes,
+  ...CharacterCreationScenes,
   ...Chapter1CastleScenes
 };
 
@@ -38,6 +36,8 @@ const bgEl = document.getElementById("background");
 const textEl = document.getElementById("story-text");
 const choicesEl = document.getElementById("choices-container");
 const dividerEl = document.getElementById("divider");
+const hudBar = document.querySelector(".hud-bar");
+const fadeOverlay = document.getElementById("fade-overlay");
 
 const hud = {
   name: document.getElementById("hud-name"),
@@ -48,6 +48,61 @@ const hud = {
   intelligence: document.getElementById("hud-intelligence"),
   endurance: document.getElementById("hud-endurance")
 };
+
+/* =====================
+   TRANSITIONS
+===================== */
+
+function fadeFull(callback) {
+  fadeOverlay.classList.add("active");
+  setTimeout(() => {
+    callback();
+    fadeOverlay.classList.remove("active");
+  }, 600);
+}
+
+function fadeBackground(callback) {
+  bgEl.style.transition = "opacity 0.6s ease";
+  bgEl.style.opacity = 0;
+
+  setTimeout(() => {
+    callback();
+    bgEl.style.opacity = 1;
+  }, 600);
+}
+
+function goToScene(nextSceneId) {
+  const nextScene = scenes[nextSceneId];
+
+  if (!nextScene || !nextScene.transition) {
+    renderScene(nextSceneId);
+    return;
+  }
+
+  if (nextScene.transition === "background") {
+    fadeBackground(() => renderScene(nextSceneId));
+    return;
+  }
+
+  if (nextScene.transition === "full") {
+    fadeFull(() => renderScene(nextSceneId));
+    return;
+  }
+
+  renderScene(nextSceneId);
+}
+
+/* =====================
+   HUD VISIBILITY
+===================== */
+
+function showHUD() {
+  hudBar.style.display = "flex";
+}
+
+function hideHUD() {
+  hudBar.style.display = "none";
+}
 
 /* =====================
    HUD UPDATE
@@ -67,9 +122,9 @@ function updateHUD() {
    REQUIREMENT CHECK
 ===================== */
 
-function meetsRequirements(requirements = {}) {
-  return Object.entries(requirements).every(
-    ([stat, value]) => state.player[stat] >= value
+function meetsRequirements(req = {}) {
+  return Object.entries(req).every(
+    ([stat, val]) => state.player[stat] >= val
   );
 }
 
@@ -86,36 +141,45 @@ function renderScene(sceneId) {
 
   state.currentScene = sceneId;
 
-  /* Background */
+  // HUD visibility
+  if (sceneId === "name_select" || sceneId === "stat_select") {
+    hideHUD();
+  } else {
+    showHUD();
+  }
+
+  // Background
   bgEl.style.backgroundImage = `url("${scene.background}")`;
 
-  /* Text */
+  // Text
   textEl.innerHTML =
     typeof scene.text === "function"
       ? scene.text(state).replace(/\n/g, "<br>")
       : scene.text.replace(/\n/g, "<br>");
 
-  /* Clear choices */
+  // Clear UI
   choicesEl.innerHTML = "";
-
-  /* Divider visibility */
   dividerEl.style.display = scene.choices.length ? "block" : "none";
 
-  /* SPECIAL CASES: name input & stat selection */
-    if (scene.choices.length === 1 && scene.choices[0].type === "name-input") {
-    renderNameInput();
-    updateHUD();
-    return;
+  /* ===== SPECIAL SCENES ===== */
+
+  if (scene.choices.length === 1) {
+    const type = scene.choices[0].type;
+
+    if (type === "name-input") {
+      renderNameInput();
+      return;
     }
 
-    if (scene.choices.length === 1 && scene.choices[0].type === "stat-allocation") {
-    renderStatAllocation();
-    updateHUD();
-    return;
+    if (type === "stat-allocation") {
+      renderStatAllocation();
+      return;
     }
+  }
 
-  /* Build choices */
-  scene.choices.forEach((choice) => {
+  /* ===== NORMAL CHOICES ===== */
+
+  scene.choices.forEach(choice => {
     const wrapper = document.createElement("div");
     wrapper.className = "choice-wrapper";
 
@@ -126,21 +190,18 @@ function renderScene(sceneId) {
     img.src = "images/ui/stone_small.png";
     img.className = "choice-img";
 
-    const span = document.createElement("span");
-    span.className = "choice-text";
-    span.textContent = choice.text;
+    const text = document.createElement("span");
+    text.className = "choice-text";
+    text.textContent = choice.text;
 
     btn.appendChild(img);
-    btn.appendChild(span);
+    btn.appendChild(text);
 
-    const allowed = meetsRequirements(choice.requires);
-
-    if (!allowed) {
+    if (!meetsRequirements(choice.requires)) {
       btn.classList.add("disabled");
 
       const req = document.createElement("div");
       req.className = "choice-requirement";
-
       req.textContent =
         "Requires " +
         Object.entries(choice.requires)
@@ -151,7 +212,7 @@ function renderScene(sceneId) {
       wrapper.appendChild(req);
     } else {
       btn.addEventListener("click", () => {
-        renderScene(choice.next);
+        goToScene(choice.next);
       });
       wrapper.appendChild(btn);
     }
@@ -161,36 +222,38 @@ function renderScene(sceneId) {
 
   updateHUD();
 }
-function renderNameInput() {
-  choicesEl.innerHTML = "";
 
+/* =====================
+   NAME INPUT
+===================== */
+
+function renderNameInput() {
   const wrapper = document.createElement("div");
   wrapper.className = "choice-wrapper";
 
   const input = document.createElement("input");
-  input.type = "text";
-  input.placeholder = "Enter your name";
   input.className = "name-input";
+  input.placeholder = "Enter your name";
 
   const btn = document.createElement("button");
   btn.className = "choice-btn";
-  
+
   const img = document.createElement("img");
   img.src = "images/ui/stone_small.png";
   img.className = "choice-img";
 
-  const span = document.createElement("span");
-  span.className = "choice-text";
-  span.textContent = "Continue";
+  const text = document.createElement("span");
+  text.className = "choice-text";
+  text.textContent = "Continue";
 
   btn.appendChild(img);
-  btn.appendChild(span);
+  btn.appendChild(text);
 
   btn.addEventListener("click", () => {
     const name = input.value.trim();
     if (name.length >= 2) {
       state.player.name = name;
-      renderScene("stat_select");
+      renderScene("stat_select"); // NO fade here
     }
   });
 
@@ -199,97 +262,90 @@ function renderNameInput() {
   choicesEl.appendChild(wrapper);
 }
 
-function renderStatAllocation() {
-  choicesEl.innerHTML = "";
-  
-  const stats = ["strength", "charisma", "speed", "intelligence", "endurance"];
+/* =====================
+   STAT ALLOCATION
+===================== */
 
-  const totalPoints = 10;
+function renderStatAllocation() {
+  const stats = ["strength", "charisma", "speed", "intelligence", "endurance"];
+  const total = 10;
   let spent = 0;
 
-  // Reset stats for creation
-  stats.forEach((s) => (state.player[s] = 0));
-
-  const updatePoints = () => {
-    pointsDisplay.textContent = `Points Remaining: ${totalPoints - spent}`;
-    updateHUD();
-    continueBtn.disabled = spent !== totalPoints;
-  };
+  stats.forEach(s => (state.player[s] = 0));
 
   const wrapper = document.createElement("div");
   wrapper.className = "choice-wrapper";
 
-  // Points Remaining display
-  const pointsDisplay = document.createElement("div");
-  pointsDisplay.className = "points-display";
-  wrapper.appendChild(pointsDisplay);
+  const remaining = document.createElement("div");
+  remaining.className = "points-display";
+  wrapper.appendChild(remaining);
 
-  // Create each stat row
-  stats.forEach((stat) => {
+  function update() {
+    remaining.textContent = `Points Remaining: ${total - spent}`;
+    btn.disabled = spent !== total;
+    updateHUD();
+  }
+
+  stats.forEach(stat => {
     const row = document.createElement("div");
     row.className = "stat-row";
 
     const label = document.createElement("span");
-    label.textContent = stat.charAt(0).toUpperCase() + stat.slice(1);
+    label.textContent = capitalize(stat);
 
     const minus = document.createElement("button");
     minus.textContent = "-";
 
-    const val = document.createElement("span");
-    val.textContent = "0";
+    const value = document.createElement("span");
+    value.className = "stat-value";
+    value.textContent = "0";
 
     const plus = document.createElement("button");
     plus.textContent = "+";
 
-    minus.addEventListener("click", () => {
+    minus.onclick = () => {
       if (state.player[stat] > 0) {
         state.player[stat]--;
         spent--;
-        val.textContent = state.player[stat];
-        updatePoints();
+        value.textContent = state.player[stat];
+        update();
       }
-    });
+    };
 
-    plus.addEventListener("click", () => {
-      if (spent < totalPoints) {
+    plus.onclick = () => {
+      if (spent < total) {
         state.player[stat]++;
         spent++;
-        val.textContent = state.player[stat];
-        updatePoints();
+        value.textContent = state.player[stat];
+        update();
       }
-    });
+    };
 
-    row.appendChild(label);
-    row.appendChild(minus);
-    row.appendChild(val);
-    row.appendChild(plus);
+    row.append(label, minus, value, plus);
     wrapper.appendChild(row);
   });
 
-  // Continue button
-  const continueBtn = document.createElement("button");
-  continueBtn.className = "choice-btn";
-  continueBtn.disabled = true;
+  const btn = document.createElement("button");
+  btn.className = "choice-btn";
+  btn.disabled = true;
 
   const img = document.createElement("img");
   img.src = "images/ui/stone_small.png";
   img.className = "choice-img";
 
-  const span = document.createElement("span");
-  span.className = "choice-text";
-  span.textContent = "Begin Your Journey";
+  const text = document.createElement("span");
+  text.className = "choice-text";
+  text.textContent = "Begin Your Journey";
 
-  continueBtn.appendChild(img);
-  continueBtn.appendChild(span);
+  btn.append(img, text);
 
-  continueBtn.addEventListener("click", () => {
-    renderScene("intro"); // jumps into story
-  });
+  btn.onclick = () => {
+    goToScene("intro"); // FULL fade via scene.transition
+  };
 
-  wrapper.appendChild(continueBtn);
+  wrapper.appendChild(btn);
   choicesEl.appendChild(wrapper);
-
-  updatePoints();
+  update();
 }
 
 /* =====================
@@ -304,6 +360,4 @@ function capitalize(str) {
    START GAME
 ===================== */
 
-updateHUD();
 renderScene("name_select");
-
